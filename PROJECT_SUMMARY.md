@@ -1,106 +1,146 @@
 # Equity Risk Forecasting with Stochastic Processes
 
-## Course Context
-This project applies the core stochastic processes covered in the course—Brownian motion, Poisson processes, and Markov chains—to a practical financial risk management problem: **Value-at-Risk (VaR) forecasting and backtesting**.
+## Objective
+This project applies simple stochastic processes to the problem of **short-horizon financial risk forecasting**, specifically 1-day Value-at-Risk (VaR) and Expected Shortfall (ES).
 
-Rather than focusing only on theory, the project evaluates how these stochastic models perform when applied to real market data.
-
----
-
-## Motivation
-
-Risk teams use statistical models to answer a simple but critical question:
-
-> *How much could we lose tomorrow, and how often will that estimate be wrong?*
-
-Value-at-Risk (VaR) provides a loss threshold that should only be exceeded with small probability (e.g., 5% or 1%).  
-However, VaR is only meaningful if its predictions are validated against realized market outcomes.
-
-This project investigates how well common stochastic models forecast downside risk and where their assumptions break down.
+The focus is not on deriving models, but on **testing their validity through rolling backtesting** on real equity data.
 
 ---
 
-## Data and Setup
+## Data and Return Construction
 
-- Daily adjusted prices for six U.S. equities and indices  
-- Sample period: **January 2015 – December 20, 2025**
-- Daily log returns defined as:
+- Assets: 6 liquid U.S. equities and indices
+- Sample: January 2015 – December  2025
+- Prices are adjusted for splits and dividends
 
+Daily log returns are defined as:
 $$
 r_t = \log\left(\frac{S_t}{S_{t-1}}\right)
 $$
 
-All models are calibrated using a **rolling 252-day window**, reflecting standard industry practice.
+Log returns are used because they are additive over time and align naturally with continuous-time models.
 
 ---
 
-## Models Studied (Linked to Course Topics)
+## Modeling Assumptions
+
+Across all models, the following assumptions are made:
+
+1. Markets are frictionless (no transaction costs)
+2. Returns are conditionally independent given model parameters
+3. Parameters are **locally stationary** over a rolling 252-day window
+4. Risk is evaluated at a **1-day horizon**, consistent with trading-desk risk management
+
+---
+
+## Stochastic Models (Course Alignment)
 
 ### 1. Geometric Brownian Motion (Brownian Motion)
 
 The baseline model assumes prices follow:
-
 $$
-dS_t = \mu S_t \, dt + \sigma S_t \, dW_t
+dS_t = \mu S_t\,dt + \sigma S_t\,dW_t
 $$
 
-- Captures continuous random fluctuations
-- Assumes constant volatility and normally distributed returns
-- Used as a benchmark model
+Equivalently, log returns satisfy:
+$$
+r_{t+1} \sim \mathcal{N}\left(\mu \Delta t, \sigma^2 \Delta t\right)
+$$
+
+**Assumptions**
+- Continuous paths
+- Constant volatility
+- Gaussian innovations
+
+**Rationale**  
+GBM serves as a benchmark model against which more complex dynamics are evaluated.
 
 ---
 
 ### 2. Jump Diffusion (Poisson Process)
 
-To allow for sudden large price movements:
-
+To capture discontinuous price movements, jumps are added:
 $$
-dS_t = \mu S_t \, dt + \sigma S_t \, dW_t + J_t \, dN_t
+dS_t = \mu S_t\,dt + \sigma S_t\,dW_t + J_t\,dN_t
 $$
 
-- $N_t$ is a Poisson process with intensity $\lambda$
-- Models rare but large shocks (e.g., crises, earnings)
-- Direct application of Poisson processes from the course
+where:
+- $N_t \sim \text{Poisson}(\lambda t)$
+- $J_t \sim \mathcal{N}(\mu_J, \sigma_J^2)$
+
+**Assumptions**
+- Jumps occur independently of diffusion
+- Jump arrivals follow a Poisson process
+- Jump sizes are i.i.d.
+
+**Rationale**  
+This model relaxes the Gaussian tail assumption and reflects rare but extreme market events.
 
 ---
 
 ### 3. Markov Regime-Switching Volatility (Markov Chains)
 
-Volatility switches between discrete regimes:
-
+Volatility evolves according to a latent Markov state:
 $$
-\sigma_t \in \{\sigma_{\text{low}}, \sigma_{\text{high}}\}
+\sigma_t = \sigma_{X_t}, \quad X_t \in \{1,2\}
 $$
 
-- Regimes evolve according to a discrete-time Markov chain
-- Captures volatility clustering observed in financial markets
-- Implemented using a simple two-state structure for interpretability
+with transition probabilities:
+$$
+\mathbb{P}(X_{t+1}=j \mid X_t=i) = p_{ij}
+$$
+
+**Assumptions**
+- Finite number of volatility regimes
+- Regime transitions are memoryless
+- Returns are conditionally Gaussian within each regime
+
+**Rationale**  
+This captures volatility clustering without introducing continuous stochastic volatility.
 
 ---
 
-## Risk Forecasting and Backtesting
+## Risk Forecasting
 
 For each trading day:
-1. Calibrate model parameters using the previous 252 days
-2. Simulate next-day returns using Monte Carlo methods
-3. Estimate VaR and Expected Shortfall (ES) at 95% and 99%
-4. Compare forecasts to realized next-day returns
+1. Parameters are estimated using the previous 252 returns
+2. Next-day returns are simulated via Monte Carlo
+3. VaR and ES are computed as:
+$$
+\text{VaR}_\alpha = \inf\{x : \mathbb{P}(R \le x) \ge \alpha\}
+$$
+$$
+\text{ES}_\alpha = \mathbb{E}[R \mid R \le \text{VaR}_\alpha]
+$$
 
-A VaR breach occurs when:
+---
 
+## Backtesting Framework
+
+A VaR breach (exception) occurs when:
 $$
 r_{t+1} < \text{VaR}_\alpha
 $$
 
-Backtesting evaluates whether observed breach rates align with expected probabilities.
+For a correctly specified model:
+$$
+\mathbb{P}(\text{breach}) = 1 - \alpha
+$$
+
+Observed breach rates are compared to theoretical expectations at 95% and 99%.
 
 ---
 
-## Key Findings
+## Key Results
 
-- At the 95% level, regime-switching volatility produces the most stable breach rates
-- At the 99% level, all models underestimate tail risk, particularly during stress periods
-- Jump diffusion improves intuition around extreme events but is sensitive to rolling calibration
-- Model failures are systematic, highlighting limitations of Gaussian-based assumptions
+- Regime-switching volatility yields breach rates closest to theoretical levels at 95%
+- All models materially underpredict tail risk at 99%
+- Jump diffusion improves tail flexibility but is sensitive to rolling calibration
+- Model failures are systematic, not sampling noise
 
+---
 
+## Conclusion
+
+The project demonstrates that stochastic processes from the course translate directly into operational risk models.  
+However, even structurally richer models remain limited by distributional assumptions, emphasizing the importance of **model validation through backtesting**.
