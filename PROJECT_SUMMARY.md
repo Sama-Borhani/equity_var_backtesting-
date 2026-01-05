@@ -2,30 +2,27 @@
 
 ## Objective
 This project applies simple stochastic processes to the problem of **short-horizon financial risk forecasting**, specifically 1-day Value-at-Risk (VaR) and Expected Shortfall (ES).
-
 The focus is not on deriving models, but on **testing their validity through rolling backtesting** on real equity data.
 
 ---
 
 ## Data and Return Construction
-
 - Assets: 6 liquid U.S. equities and indices
-- Sample: January 2015 – December  2025
+- Sample: January 2015 – December 2025
 - Prices are adjusted for splits and dividends
 
 Daily log returns are defined as:
-$$
+
+```math
 r_t = \log\left(\frac{S_t}{S_{t-1}}\right)
-$$
+```
 
 Log returns are used because they are additive over time and align naturally with continuous-time models.
 
 ---
 
 ## Modeling Assumptions
-
 Across all models, the following assumptions are made:
-
 1. Markets are frictionless (no transaction costs)
 2. Returns are conditionally independent given model parameters
 3. Parameters are **locally stationary** over a rolling 252-day window
@@ -36,16 +33,17 @@ Across all models, the following assumptions are made:
 ## Stochastic Models (Course Alignment)
 
 ### 1. Geometric Brownian Motion (Brownian Motion)
-
 The baseline model assumes prices follow:
-$$
+
+```math
 dS_t = \mu S_t\,dt + \sigma S_t\,dW_t
-$$
+```
 
 Equivalently, log returns satisfy:
-$$
+
+```math
 r_{t+1} \sim \mathcal{N}\left(\mu \Delta t, \sigma^2 \Delta t\right)
-$$
+```
 
 **Assumptions**
 - Continuous paths
@@ -58,11 +56,11 @@ GBM serves as a benchmark model against which more complex dynamics are evaluate
 ---
 
 ### 2. Jump Diffusion (Poisson Process)
-
 To capture discontinuous price movements, jumps are added:
-$$
+
+```math
 dS_t = \mu S_t\,dt + \sigma S_t\,dW_t + J_t\,dN_t
-$$
+```
 
 where:
 - $N_t \sim \text{Poisson}(\lambda t)$
@@ -79,16 +77,17 @@ This model relaxes the Gaussian tail assumption and reflects rare but extreme ma
 ---
 
 ### 3. Markov Regime-Switching Volatility (Markov Chains)
-
 Volatility evolves according to a latent Markov state:
-$$
+
+```math
 \sigma_t = \sigma_{X_t}, \quad X_t \in \{1,2\}
-$$
+```
 
 with transition probabilities:
-$$
+
+```math
 \mathbb{P}(X_{t+1}=j \mid X_t=i) = p_{ij}
-$$
+```
 
 **Assumptions**
 - Finite number of volatility regimes
@@ -101,38 +100,39 @@ This captures volatility clustering without introducing continuous stochastic vo
 ---
 
 ## Risk Forecasting
-
 For each trading day:
 1. Parameters are estimated using the previous 252 returns
 2. Next-day returns are simulated via Monte Carlo
 3. VaR and ES are computed as:
-$$
+
+```math
 \text{VaR}_\alpha = \inf\{x : \mathbb{P}(R \le x) \ge \alpha\}
-$$
-$$
+```
+
+```math
 \text{ES}_\alpha = \mathbb{E}[R \mid R \le \text{VaR}_\alpha]
-$$
+```
 
 ---
 
 ## Backtesting Framework
-
 A VaR breach (exception) occurs when:
-$$
+
+```math
 r_{t+1} < \text{VaR}_\alpha
-$$
+```
 
 For a correctly specified model:
-$$
+
+```math
 \mathbb{P}(\text{breach}) = 1 - \alpha
-$$
+```
 
 Observed breach rates are compared to theoretical expectations at 95% and 99%.
 
 ---
 
 ## Key Results
-
 - Regime-switching volatility yields breach rates closest to theoretical levels at 95%
 - All models materially underpredict tail risk at 99%
 - Jump diffusion improves tail flexibility but is sensitive to rolling calibration
@@ -141,6 +141,5 @@ Observed breach rates are compared to theoretical expectations at 95% and 99%.
 ---
 
 ## Conclusion
-
 The project demonstrates that stochastic processes from the course translate directly into operational risk models.  
 However, even structurally richer models remain limited by distributional assumptions, emphasizing the importance of **model validation through backtesting**.
