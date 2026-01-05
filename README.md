@@ -9,7 +9,7 @@ downside risk using rolling Value-at-Risk (VaR) backtesting.
 - Markov Regime-Switching Volatility (2-state)
 
 ## Methodology
-- Daily log returns from U.S. equities (2015–2024)
+- Daily log returns from U.S. equities (2015–2025)
 - Rolling 252-day calibration window
 - 1-day VaR and Expected Shortfall at 95% and 99%
 - Backtesting via exception (breach) rates
