@@ -103,9 +103,4 @@ Backtesting evaluates whether observed breach rates align with expected probabil
 - Jump diffusion improves intuition around extreme events but is sensitive to rolling calibration
 - Model failures are systematic, highlighting limitations of Gaussian-based assumptions
 
----
 
-## Conclusion
-
-This project demonstrates how stochastic processes from the course translate directly into real-world risk systems.  
-The key insight is not that one model is correct, but that **model validation through backtesting is essential**, and understanding *why* models fail is as important as building them.
